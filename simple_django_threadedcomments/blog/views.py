@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Post, Comment
+from .models import Post, ThreadedComment
 from .forms import CommentForm
 
 from django.core.urlresolvers import reverse
@@ -16,13 +16,15 @@ def single_post(request, post_id):
 	single_post = get_object_or_404(Post, pk=post_id)
 
 	if request.method == "POST":
-		#save comment
-		comment = Comment(comment=request.POST['comment'], ) 
-		form = CommentForm(request.POST)
+		form = CommentForm(data=request.POST)
 		if form.is_valid():
-			# if this is a reply to a comment, not to a post 
-			if form.cleaned_data['parent'] != '': 
-				comment.parent = Comment.objects.get(id=request.POST['parent']) 
+			comment = form.save(commit=False)
+
+			parent = form['parent_id'].value()
+
+			if form.cleaned_data['parent_id'] != '': 
+				parent_comment = get_object_or_404(ThreadedComment, pk=parent)
+				comment.parent = parent_comment
 				comment.post = single_post
 				comment.save()
 			else:
@@ -35,8 +37,6 @@ def single_post(request, post_id):
 	else:
 		form = CommentForm()
 
-	# LOAD COMMENTS
-	comments = Comment.objects.filter(post=single_post)
+	comment_tree = ThreadedComment.objects.filter(post=single_post)
 
-	#return render(request, 'post.html', context_dict)
 	return render_to_response('post.html', locals(), context_instance=RequestContext(request))	

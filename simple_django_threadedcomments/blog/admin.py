@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Post, Comment
+from .models import Post, ThreadedComment
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -9,8 +9,8 @@ class PostAdmin(admin.ModelAdmin):
 admin.site.register(Post, PostAdmin)
 
 
-class CommentAdmin(admin.ModelAdmin):
+class ThreadedCommentAdmin(admin.ModelAdmin):
     class Meta:
-        model = Comment
+        model = ThreadedComment
 
-admin.site.register(Comment, CommentAdmin)
+admin.site.register(ThreadedComment, ThreadedCommentAdmin)

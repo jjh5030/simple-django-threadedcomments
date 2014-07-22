@@ -16,7 +16,7 @@ class Post(models.Model):
 	def __unicode__(self):
 		return str(self.title)
 
-class Comment(models.Model): 
+class ThreadedComment(models.Model): 
 	""" Threaded comments for blog posts """ 
 	post = models.ForeignKey(Post) 
 	comment = models.TextField() 
@@ -30,6 +30,10 @@ class Comment(models.Model):
 	@property
 	def depth(self):
 		return len(self.tree_path.split(PATH_SEPARATOR))
+
+	@property
+	def depth_adjusted(self):
+		return len(self.tree_path.split(PATH_SEPARATOR)) - 1
 
 	@property
 	def root_id(self):
@@ -54,20 +58,6 @@ class Comment(models.Model):
 
 		self.tree_path = tree_path
 		ThreadedComment.objects.filter(pk=self.pk).update(tree_path=self.tree_path)
-
-	def delete(self, *args, **kwargs):
-		# Fix last child on deletion.
-		if self.parent_id:
-			try:
-				prev_child_id = ThreadedComment.objects \
-								.filter(parent=self.parent_id) \
-								.exclude(pk=self.pk) \
-								.order_by('-submit_date') \
-								.values_list('pk', flat=True)[0]
-			except IndexError:
-				prev_child_id = None
-			ThreadedComment.objects.filter(pk=self.parent_id).update(last_child=prev_child_id)
-		super(ThreadedComment, self).delete(*args, **kwargs)
 
 	class Meta(object):
 		ordering = ('tree_path',)
